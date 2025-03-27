@@ -1,7 +1,9 @@
+
 import { useEffect, useState } from "react";
 import axios from "axios";
 
-const BASE_URL = "https://api-nim.onrender.com";
+const session_id = localStorage.getItem("session_id") || crypto.randomUUID();
+localStorage.setItem("session_id", session_id);
 
 export default function JogoDosPaus() {
   const [estado, setEstado] = useState(null);
@@ -9,12 +11,12 @@ export default function JogoDosPaus() {
   const [pausSelecionados, setPausSelecionados] = useState([]);
 
   const fetchEstado = async () => {
-    const res = await axios.get(`${BASE_URL}/estado`);
+    const res = await axios.get(`https://api-nim.onrender.com/estado?session_id=${session_id}`);
     setEstado(res.data);
   };
 
   const iniciarJogo = async () => {
-    await axios.post(`${BASE_URL}/novo-jogo`);
+    await axios.post(`https://api-nim.onrender.com/novo-jogo?session_id=${session_id}`);
     setLinhaSelecionada(null);
     setPausSelecionados([]);
     fetchEstado();
@@ -26,7 +28,7 @@ export default function JogoDosPaus() {
     const inicio = Math.min(...pausSelecionados);
     const quantidade = pausSelecionados.length;
 
-    await axios.post(`${BASE_URL}/jogada`, {
+    await axios.post(`https://api-nim.onrender.com/jogada?session_id=${session_id}`, {
       linha: linhaSelecionada,
       inicio,
       quantidade,
@@ -34,18 +36,19 @@ export default function JogoDosPaus() {
 
     setLinhaSelecionada(null);
     setPausSelecionados([]);
-    fetchEstado();
-  };
+    await fetchEstado();
 
-  const jogadaComputador = async () => {
-    await axios.post(`${BASE_URL}/jogada-computador`);
-    setLinhaSelecionada(null);
-    setPausSelecionados([]);
-    fetchEstado();
+    const res = await axios.get(`https://api-nim.onrender.com/estado?session_id=${session_id}`);
+    if (!res.data.jogo_terminado) {
+      await axios.post(`https://api-nim.onrender.com/jogada-computador?session_id=${session_id}`);
+      setLinhaSelecionada(null);
+      setPausSelecionados([]);
+      fetchEstado();
+    }
   };
 
   const selecionarPau = (linhaIdx, pauIdx) => {
-    if (estado?.jogo_terminado) return;
+    if (!estado || estado.jogo_terminado) return;
     if (linhaSelecionada !== null && linhaSelecionada !== linhaIdx) return;
 
     const key = pauIdx;
@@ -63,39 +66,36 @@ export default function JogoDosPaus() {
   }, []);
 
   return (
-    <div className="p-8 space-y-6 max-w-5xl mx-auto font-sans">
-      <h1 className="text-4xl font-bold text-center">Jogo dos Paus</h1>
+    <div className="p-6 space-y-4 max-w-3xl mx-auto font-sans">
+      <h1 className="text-3xl font-bold text-center">Jogo dos Paus</h1>
 
-      <div className="flex justify-center gap-4 mb-6 flex-wrap">
-        <button onClick={iniciarJogo} className="bg-blue-600 text-white px-6 py-3 rounded-lg text-lg">
+      <div className="flex justify-center gap-2 mb-4">
+        <button onClick={iniciarJogo} className="bg-blue-500 text-white px-4 py-2 rounded">
           Novo Jogo
         </button>
-        <button onClick={fazerJogada} className="bg-green-600 text-white px-6 py-3 rounded-lg text-lg">
+        <button onClick={fazerJogada} className="bg-green-500 text-white px-4 py-2 rounded">
           Confirmar Jogada
-        </button>
-        <button onClick={jogadaComputador} className="bg-purple-600 text-white px-6 py-3 rounded-lg text-lg">
-          Jogada do Computador
         </button>
       </div>
 
       {estado && (
-        <div className="space-y-4">
-          <p className="text-center text-xl">XOR Total: {estado.xor_total}</p>
+        <div className="space-y-3">
+          <p className="text-center text-lg">XOR Total: {estado.xor_total}</p>
           {estado.jogo_terminado && (
-            <p className="text-red-600 text-center font-semibold text-lg">Fim do jogo!</p>
+            <p className="text-red-500 text-center font-semibold">Fim do jogo!</p>
           )}
 
-          <div className="space-y-3 flex flex-col items-center">
-            {estado?.available_paus?.map((linha, i) => (
-              <div key={i} className="flex gap-3 justify-center">
+          <div className="space-y-2 flex flex-col items-center">
+            {estado.available_paus.map((linha, i) => (
+              <div key={i} className="flex gap-1 justify-center">
                 {linha.map((disponivel, j) => (
                   <button
                     key={j}
                     disabled={!disponivel || (linhaSelecionada !== null && linhaSelecionada !== i)}
-                    className={`w-14 h-14 border-2 text-2xl font-bold rounded-xl transition ${
+                    className={`w-10 h-10 border text-xl font-bold rounded transition ${
                       !disponivel ? "bg-gray-300 text-gray-500" :
                       linhaSelecionada === i && pausSelecionados.includes(j)
-                        ? "bg-red-600 text-white" : "bg-white"
+                        ? "bg-red-500 text-white" : "bg-white"
                     }`}
                     onClick={() => selecionarPau(i, j)}
                   >
