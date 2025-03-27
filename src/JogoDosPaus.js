@@ -32,7 +32,6 @@ export default function JogoDosPaus() {
 
   const iniciarJogo = async () => {
     await axiosInstance.post("/novo-jogo");
-    await axiosInstance.post("/jogada-computador"); // computador joga primeiro
     fetchEstado();
     setLinhaSelecionada(null);
     setPausSelecionados([]);
@@ -49,13 +48,13 @@ export default function JogoDosPaus() {
       quantidade,
     });
 
-    const res = await axiosInstance.get("/estado");
-    if (!res.data.jogo_terminado) {
-      await axiosInstance.post("/jogada-computador");
-    }
-
     setLinhaSelecionada(null);
     setPausSelecionados([]);
+    fetchEstado();
+  };
+
+  const jogadaComputador = async () => {
+    await axiosInstance.post("/jogada-computador");
     fetchEstado();
   };
 
@@ -87,6 +86,9 @@ export default function JogoDosPaus() {
         <button onClick={fazerJogada} className="bg-green-600 text-white px-6 py-3 rounded-lg text-lg">
           Confirmar Jogada
         </button>
+        <button onClick={jogadaComputador} className="bg-purple-600 text-white px-6 py-3 rounded-lg text-lg">
+          Jogada do Computador
+        </button>
       </div>
 
       {estado && (
@@ -103,11 +105,11 @@ export default function JogoDosPaus() {
                   <button
                     key={j}
                     disabled={!disponivel || (linhaSelecionada !== null && linhaSelecionada !== i)}
-                    className={`w-14 h-14 border-2 text-2xl font-bold rounded-xl transition ${
-                      !disponivel ? "bg-gray-300 text-gray-500" :
-                      linhaSelecionada === i && pausSelecionados.includes(j)
-                        ? "bg-red-600 text-white" : "bg-white"
-                    }`}
+                    className={\`w-14 h-14 border-2 text-2xl font-bold rounded-xl transition \${!disponivel
+                      ? "bg-gray-300 text-gray-500"
+                      : linhaSelecionada === i && pausSelecionados.includes(j)
+                      ? "bg-red-600 text-white"
+                      : "bg-white"}\`}
                     onClick={() => selecionarPau(i, j)}
                   >
                     {disponivel ? "|" : "✖"}
