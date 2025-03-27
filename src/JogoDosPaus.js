@@ -1,10 +1,8 @@
-
 import { useEffect, useState } from "react";
 import axios from "axios";
 
 const BASE_URL = "https://api-nim.onrender.com";
 
-// Gerar ou obter user_id do localStorage
 const getUserId = () => {
   let id = localStorage.getItem("user_id");
   if (!id) {
@@ -61,11 +59,18 @@ export default function JogoDosPaus() {
 
   const selecionarPau = (linhaIdx, pauIdx) => {
     if (!estado || estado.jogo_terminado) return;
+
     if (linhaSelecionada !== null && linhaSelecionada !== linhaIdx) return;
+
     const key = pauIdx;
     const selecionado = pausSelecionados.includes(key);
+
     if (selecionado) {
-      setPausSelecionados(pausSelecionados.filter((idx) => idx !== key));
+      const novaSelecao = pausSelecionados.filter((idx) => idx !== key);
+      setPausSelecionados(novaSelecao);
+      if (novaSelecao.length === 0) {
+        setLinhaSelecionada(null);
+      }
     } else {
       setLinhaSelecionada(linhaIdx);
       setPausSelecionados([...pausSelecionados, key]);
