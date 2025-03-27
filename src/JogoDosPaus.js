@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import axios from "axios";
 
@@ -105,11 +106,13 @@ export default function JogoDosPaus() {
                   <button
                     key={j}
                     disabled={!disponivel || (linhaSelecionada !== null && linhaSelecionada !== i)}
-                    className={\`w-14 h-14 border-2 text-2xl font-bold rounded-xl transition \${!disponivel
-                      ? "bg-gray-300 text-gray-500"
-                      : linhaSelecionada === i && pausSelecionados.includes(j)
-                      ? "bg-red-600 text-white"
-                      : "bg-white"}\`}
+                    className={`w-14 h-14 border-2 text-2xl font-bold rounded-xl transition ${
+                      !disponivel
+                        ? "bg-gray-300 text-gray-500"
+                        : linhaSelecionada === i && pausSelecionados.includes(j)
+                        ? "bg-red-600 text-white"
+                        : "bg-white"
+                    }`}
                     onClick={() => selecionarPau(i, j)}
                   >
                     {disponivel ? "|" : "✖"}
