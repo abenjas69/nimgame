@@ -1,72 +1,123 @@
+import { useEffect, useState } from "react";
+import axios from "axios";
 
-from flask import Flask, request, jsonify, session
-from flask_cors import CORS
-from uuid import uuid4
+const BASE_URL = "https://api-nim.onrender.com";
 
-app = Flask(__name__)
-app.secret_key = 'supersecretkey'
-CORS(app, supports_credentials=True)
+// Gerar ou obter user_id do localStorage
+const getUserId = () => {
+  let id = localStorage.getItem("user_id");
+  if (!id) {
+    id = crypto.randomUUID();
+    localStorage.setItem("user_id", id);
+  }
+  return id;
+};
 
-# Funções de lógica do jogo
-def estado_inicial():
-    return {
-        "available_paus": [
-            [1],
-            [1, 1],
-            [1, 1, 1],
-            [1, 1, 1, 1]
-        ],
-        "jogo_terminado": False,
-        "xor_total": 0
+const axiosInstance = axios.create({
+  baseURL: BASE_URL,
+  headers: {
+    "X-User-ID": getUserId(),
+  },
+});
+
+export default function JogoDosPaus() {
+  const [estado, setEstado] = useState(null);
+  const [linhaSelecionada, setLinhaSelecionada] = useState(null);
+  const [pausSelecionados, setPausSelecionados] = useState([]);
+
+  const fetchEstado = async () => {
+    const res = await axiosInstance.get("/estado");
+    setEstado(res.data);
+  };
+
+  const iniciarJogo = async () => {
+    await axiosInstance.post("/novo-jogo");
+    await axiosInstance.post("/jogada-computador"); // computador joga primeiro
+    fetchEstado();
+    setLinhaSelecionada(null);
+    setPausSelecionados([]);
+  };
+
+  const fazerJogada = async () => {
+    if (linhaSelecionada === null || pausSelecionados.length === 0) return;
+    const inicio = Math.min(...pausSelecionados);
+    const quantidade = pausSelecionados.length;
+
+    await axiosInstance.post("/jogada", {
+      linha: linhaSelecionada,
+      inicio,
+      quantidade,
+    });
+
+    const res = await axiosInstance.get("/estado");
+    if (!res.data.jogo_terminado) {
+      await axiosInstance.post("/jogada-computador");
     }
 
-def calcular_xor(estado):
-    return eval("^".join(str(sum(linha)) for linha in estado["available_paus"]))
+    setLinhaSelecionada(null);
+    setPausSelecionados([]);
+    fetchEstado();
+  };
 
-@app.before_request
-def garantir_sessao():
-    if "id" not in session:
-        session["id"] = str(uuid4())
-    if "estado" not in session:
-        session["estado"] = estado_inicial()
+  const selecionarPau = (linhaIdx, pauIdx) => {
+    if (!estado || estado.jogo_terminado) return;
+    if (linhaSelecionada !== null && linhaSelecionada !== linhaIdx) return;
+    const key = pauIdx;
+    const selecionado = pausSelecionados.includes(key);
+    if (selecionado) {
+      setPausSelecionados(pausSelecionados.filter((idx) => idx !== key));
+    } else {
+      setLinhaSelecionada(linhaIdx);
+      setPausSelecionados([...pausSelecionados, key]);
+    }
+  };
 
-@app.route("/estado")
-def estado():
-    estado = session.get("estado", estado_inicial())
-    estado["xor_total"] = calcular_xor(estado)
-    return jsonify(estado)
+  useEffect(() => {
+    fetchEstado();
+  }, []);
 
-@app.route("/novo-jogo", methods=["POST"])
-def novo_jogo():
-    session["estado"] = estado_inicial()
-    return jsonify(session["estado"])
+  return (
+    <div className="p-8 space-y-6 max-w-5xl mx-auto font-sans">
+      <h1 className="text-4xl font-bold text-center">Jogo dos Paus</h1>
 
-@app.route("/jogada", methods=["POST"])
-def jogada():
-    data = request.json
-    estado = session["estado"]
-    linha, inicio, quantidade = data["linha"], data["inicio"], data["quantidade"]
-    for i in range(inicio, inicio + quantidade):
-        if i < len(estado["available_paus"][linha]):
-            estado["available_paus"][linha][i] = 0
-    estado["jogo_terminado"] = all(all(p == 0 for p in linha) for linha in estado["available_paus"])
-    session["estado"] = estado
-    return jsonify(success=True)
+      <div className="flex justify-center gap-4 mb-6 flex-wrap">
+        <button onClick={iniciarJogo} className="bg-blue-600 text-white px-6 py-3 rounded-lg text-lg">
+          Novo Jogo
+        </button>
+        <button onClick={fazerJogada} className="bg-green-600 text-white px-6 py-3 rounded-lg text-lg">
+          Confirmar Jogada
+        </button>
+      </div>
 
-@app.route("/jogada-computador", methods=["POST"])
-def jogada_computador():
-    estado = session["estado"]
-    for i, linha in enumerate(estado["available_paus"]):
-        count = sum(linha)
-        if count > 0:
-            for j in range(len(linha)):
-                if linha[j] == 1:
-                    linha[j] = 0
-                    break
-            break
-    estado["jogo_terminado"] = all(all(p == 0 for p in linha) for linha in estado["available_paus"])
-    session["estado"] = estado
-    return jsonify(success=True)
+      {estado && (
+        <div className="space-y-4">
+          <p className="text-center text-xl">XOR Total: {estado.xor_total}</p>
+          {estado.jogo_terminado && (
+            <p className="text-red-600 text-center font-semibold text-lg">Fim do jogo!</p>
+          )}
 
-if __name__ == "__main__":
-    app.run(debug=True)
+          <div className="space-y-3 flex flex-col items-center">
+            {estado.available_paus.map((linha, i) => (
+              <div key={i} className="flex gap-3 justify-center">
+                {linha.map((disponivel, j) => (
+                  <button
+                    key={j}
+                    disabled={!disponivel || (linhaSelecionada !== null && linhaSelecionada !== i)}
+                    className={`w-14 h-14 border-2 text-2xl font-bold rounded-xl transition ${
+                      !disponivel ? "bg-gray-300 text-gray-500" :
+                      linhaSelecionada === i && pausSelecionados.includes(j)
+                        ? "bg-red-600 text-white" : "bg-white"
+                    }`}
+                    onClick={() => selecionarPau(i, j)}
+                  >
+                    {disponivel ? "|" : "✖"}
+                  </button>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
