@@ -98,8 +98,22 @@ export default function NimGame() {
         setLinhaSelecionada(null);
       }
     } else {
+      const novaSelecao = [...pausSelecionados, key].sort((a, b) => a - b);
+
+      // Verificar se todos os paus são consecutivos
+      const saoConsecutivos = novaSelecao.every((val, idx, arr) => {
+        if (idx === 0) return true;
+        return val === arr[idx - 1] + 1;
+      });
+
+      if (!saoConsecutivos) {
+        setError("You can only select adjacent sticks");
+        return;
+      }
+
       setLinhaSelecionada(linhaIdx);
-      setPausSelecionados([...pausSelecionados, key]);
+      setPausSelecionados(novaSelecao);
+      setError("");
     }
   };
 
