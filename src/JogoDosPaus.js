@@ -86,43 +86,51 @@ export default function NimGame() {
   };
 
   const selecionarPau = (linhaIdx, pauIdx) => {
-    if (!estado || estado.jogo_terminado) return;
+  if (!estado || estado.jogo_terminado) return;
 
-    const key = pauIdx;
-    const selecionado = pausSelecionados.includes(key);
+  const key = pauIdx;
+  const selecionado = pausSelecionados.includes(key);
 
-    if (!selecionado) {
-      const linhaAtual = linhaSelecionada !== null ? linhaSelecionada : linhaIdx;
-
-      if (pausSelecionados.length > 0 && linhaIdx !== linhaAtual) {
-        setError("You can only select sticks from one row");
-        return;
-      }
-
-      const novaSelecao = [...pausSelecionados, key].sort((a, b) => a - b);
-
-      const saoConsecutivos = novaSelecao.every((val, idx, arr) => {
-        if (idx === 0) return true;
-        return val === arr[idx - 1] + 1;
-      });
-
-      if (!saoConsecutivos) {
-        setError("You can only select adjacent sticks");
-        return;
-      }
-
-      setLinhaSelecionada(linhaAtual);
-      setPausSelecionados(novaSelecao);
-      setError("");
-    } else {
-      const novaSelecao = pausSelecionados.filter((idx) => idx !== key);
-      setPausSelecionados(novaSelecao);
-      if (novaSelecao.length === 0) {
-        setLinhaSelecionada(null);
-      }
-      setError("");
+  if (!selecionado) {
+    // Verificar se é da mesma linha que a seleção inicial
+    if (pausSelecionados.length > 0 && linhaSelecionada !== linhaIdx) {
+      setError("You can only select sticks from one row");
+      return;
     }
-  };
+
+    const novaSelecao = [...pausSelecionados, key].sort((a, b) => a - b);
+
+    // Verificar se são adjacentes
+    const saoConsecutivos = novaSelecao.every((val, idx, arr) => {
+      if (idx === 0) return true;
+      return val === arr[idx - 1] + 1;
+    });
+
+    if (!saoConsecutivos) {
+      setError("You can only select adjacent sticks");
+      return;
+    }
+
+    // Se for o primeiro pau, define a linha selecionada
+    if (pausSelecionados.length === 0) {
+      setLinhaSelecionada(linhaIdx);
+    }
+
+    setPausSelecionados(novaSelecao);
+    setError(""); // limpar erro
+  } else {
+    // Deselecionar o pau
+    const novaSelecao = pausSelecionados.filter((idx) => idx !== key);
+    setPausSelecionados(novaSelecao);
+
+    // Se não sobrar nenhum, limpar a linha selecionada
+    if (novaSelecao.length === 0) {
+      setLinhaSelecionada(null);
+    }
+
+    setError(""); // limpar erro
+  }
+};
 
   useEffect(() => {
     fetchEstado();
