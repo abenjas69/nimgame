@@ -204,7 +204,7 @@ export default function NimGame() {
             <p className="italic text-sm mt-2">NOTE: If the computer makes the first move, it always wins!!!</p>
           </div>
         )}
-        <p className="mt-6 text-gray-600 text-sm">Authors: Tiago Mendes; Diogo Borges; Daniel Lima; Afonso Silva; Tiago Pinto; Joao Barroso and Arsénio Reis</p>
+        <p className="mt-6 text-gray-600 text-sm">Authors: Tiago Mendes; Diogo Borges; Daniel Lima; Afonso Silva; Tiago Pinto; João Barroso and Arsénio Reis</p>
       </div>
     </div>
   );
