@@ -86,7 +86,10 @@ export default function NimGame() {
   const selecionarPau = (linhaIdx, pauIdx) => {
     if (!estado || estado.jogo_terminado) return;
 
-    if (linhaSelecionada !== null && linhaSelecionada !== linhaIdx) return;
+    if (linhaSelecionada !== null && linhaSelecionada !== linhaIdx) {
+      setError("You can only select sticks from one row");
+      return;
+    }
 
     const key = pauIdx;
     const selecionado = pausSelecionados.includes(key);
@@ -97,6 +100,7 @@ export default function NimGame() {
       if (novaSelecao.length === 0) {
         setLinhaSelecionada(null);
       }
+      setError("");
     } else {
       const novaSelecao = [...pausSelecionados, key].sort((a, b) => a - b);
 
