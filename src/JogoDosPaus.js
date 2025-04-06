@@ -19,10 +19,11 @@ const axiosInstance = axios.create({
   },
 });
 
-export default function JogoDosPaus() {
+export default function NimGame() {
   const [estado, setEstado] = useState(null);
   const [linhaSelecionada, setLinhaSelecionada] = useState(null);
   const [pausSelecionados, setPausSelecionados] = useState([]);
+  const [showRules, setShowRules] = useState(false);
 
   const fetchEstado = async () => {
     const res = await axiosInstance.get("/estado");
@@ -83,17 +84,17 @@ export default function JogoDosPaus() {
 
   return (
     <div className="p-8 space-y-6 max-w-5xl mx-auto font-sans">
-      <h1 className="text-4xl font-bold text-center">Jogo dos Paus</h1>
+      <h1 className="text-4xl font-bold text-center">Nim Game</h1>
 
       <div className="flex justify-center gap-4 mb-6 flex-wrap">
         <button onClick={iniciarJogo} className="bg-blue-600 text-white px-6 py-3 rounded-lg text-lg">
-          Novo Jogo
+          New Game
         </button>
         <button onClick={fazerJogada} className="bg-green-600 text-white px-6 py-3 rounded-lg text-lg">
-          Confirmar Jogada
+          Confirm Move
         </button>
         <button onClick={jogadaComputador} className="bg-purple-600 text-white px-6 py-3 rounded-lg text-lg">
-          Jogada do Computador
+          Computer Move
         </button>
       </div>
 
@@ -101,7 +102,7 @@ export default function JogoDosPaus() {
         <div className="space-y-4">
           <p className="text-center text-xl">XOR Total: {estado.xor_total}</p>
           {estado.jogo_terminado && (
-            <p className="text-red-600 text-center font-semibold text-lg">Fim do jogo!</p>
+            <p className="text-red-600 text-center font-semibold text-lg">Game Over!</p>
           )}
 
           <div className="space-y-3 flex flex-col items-center">
@@ -128,6 +129,25 @@ export default function JogoDosPaus() {
           </div>
         </div>
       )}
+
+      <div className="text-center mt-8">
+        <button
+          onClick={() => setShowRules(!showRules)}
+          className="bg-gray-700 text-white px-5 py-2 rounded-lg"
+        >
+          Game Rules
+        </button>
+        {showRules && (
+          <div className="mt-4 text-left max-w-xl mx-auto bg-gray-100 p-4 rounded shadow">
+            <p>Players take turns</p>
+            <p>Removal of elements from a line is exclusively one turn</p>
+            <p>Restriction: quantity of elements removed is limited to the selected line and if selecting more than one element, they must be adjacent</p>
+            <p>Terminal objective: force the opponent to capture the last element</p>
+            <p className="italic text-sm mt-2">NOTE: If the computer makes the first move, it always wins!!!</p>
+          </div>
+        )}
+        <p className="mt-6 text-gray-600 text-sm">Authors: Tiago Mendes; Diogo Borges; Daniel Lima; Afonso Silva; Tiago Pinto; Joao Barroso and Arsénio Reis</p>
+      </div>
     </div>
   );
 }
