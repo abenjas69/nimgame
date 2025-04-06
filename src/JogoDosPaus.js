@@ -92,8 +92,12 @@ export default function NimGame() {
     const selecionado = pausSelecionados.includes(key);
 
     if (!selecionado) {
-      // Se já há paus selecionados, a linha tem de ser a mesma
-      if (pausSelecionados.length > 0 && linhaSelecionada !== linhaIdx) {
+      // Verificação de linha diferente mesmo que linhaSelecionada seja null
+      if (
+        pausSelecionados.length > 0 &&
+        linhaSelecionada !== null &&
+        linhaIdx !== linhaSelecionada
+      ) {
         setError("You can only select sticks from one row");
         return;
       }
@@ -110,7 +114,7 @@ export default function NimGame() {
         return;
       }
 
-      setLinhaSelecionada(linhaIdx);
+      setLinhaSelecionada(linhaSelecionada ?? linhaIdx);
       setPausSelecionados(novaSelecao);
       setError("");
     } else {
