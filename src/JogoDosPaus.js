@@ -24,6 +24,8 @@ export default function NimGame() {
   const [linhaSelecionada, setLinhaSelecionada] = useState(null);
   const [pausSelecionados, setPausSelecionados] = useState([]);
   const [showRules, setShowRules] = useState(false);
+  const [lastPlayer, setLastPlayer] = useState(null); // 'user' or 'computer'
+  const [error, setError] = useState("");
 
   const fetchEstado = async () => {
     const res = await axiosInstance.get("/estado");
@@ -35,27 +37,50 @@ export default function NimGame() {
     fetchEstado();
     setLinhaSelecionada(null);
     setPausSelecionados([]);
+    setLastPlayer(null);
+    setError("");
   };
 
   const fazerJogada = async () => {
+    if (lastPlayer === "user") {
+      setError("You can't play twice in a row");
+      return;
+    }
+
     if (linhaSelecionada === null || pausSelecionados.length === 0) return;
     const inicio = Math.min(...pausSelecionados);
     const quantidade = pausSelecionados.length;
 
-    await axiosInstance.post("/jogada", {
-      linha: linhaSelecionada,
-      inicio,
-      quantidade,
-    });
-
-    setLinhaSelecionada(null);
-    setPausSelecionados([]);
-    fetchEstado();
+    try {
+      await axiosInstance.post("/jogada", {
+        linha: linhaSelecionada,
+        inicio,
+        quantidade,
+      });
+      setLastPlayer("user");
+      setError("");
+      setLinhaSelecionada(null);
+      setPausSelecionados([]);
+      fetchEstado();
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const jogadaComputador = async () => {
-    await axiosInstance.post("/jogada-computador");
-    fetchEstado();
+    if (lastPlayer === "computer") {
+      setError("Computer cannot play 2 times in a row");
+      return;
+    }
+
+    try {
+      await axiosInstance.post("/jogada-computador");
+      setLastPlayer("computer");
+      setError("");
+      fetchEstado();
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const selecionarPau = (linhaIdx, pauIdx) => {
@@ -98,9 +123,11 @@ export default function NimGame() {
         </button>
       </div>
 
+      {error && <p className="text-red-600 text-center font-semibold">{error}</p>}
+
       {estado && (
         <div className="space-y-4">
-          <p className="text-center text-xl">XOR Total: {estado.xor_total}</p>
+          <p className="text-center text-xl">Total XOR: {estado.xor_total}</p>
           {estado.jogo_terminado && (
             <p className="text-red-600 text-center font-semibold text-lg">Game Over!</p>
           )}
