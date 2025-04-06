@@ -63,6 +63,7 @@ export default function NimGame() {
       setPausSelecionados([]);
       fetchEstado();
     } catch (err) {
+      setError(err?.response?.data?.erro || "Unknown error");
       console.error(err);
     }
   };
@@ -79,6 +80,7 @@ export default function NimGame() {
       setError("");
       fetchEstado();
     } catch (err) {
+      setError(err?.response?.data?.erro || "Unknown error");
       console.error(err);
     }
   };
@@ -90,15 +92,14 @@ export default function NimGame() {
     const selecionado = pausSelecionados.includes(key);
 
     if (!selecionado) {
-      // Verificar se o utilizador está a tentar selecionar paus de linhas diferentes
-      if (linhaSelecionada !== null && linhaSelecionada !== linhaIdx) {
+      // Se já há paus selecionados, a linha tem de ser a mesma
+      if (pausSelecionados.length > 0 && linhaSelecionada !== linhaIdx) {
         setError("You can only select sticks from one row");
         return;
       }
 
       const novaSelecao = [...pausSelecionados, key].sort((a, b) => a - b);
 
-      // Verificar se todos os paus são consecutivos
       const saoConsecutivos = novaSelecao.every((val, idx, arr) => {
         if (idx === 0) return true;
         return val === arr[idx - 1] + 1;
