@@ -24,7 +24,7 @@ export default function NimGame() {
   const [linhaSelecionada, setLinhaSelecionada] = useState(null);
   const [pausSelecionados, setPausSelecionados] = useState([]);
   const [showRules, setShowRules] = useState(false);
-  const [lastPlayer, setLastPlayer] = useState(null); // 'user' or 'computer'
+  const [lastPlayer, setLastPlayer] = useState(null);
   const [error, setError] = useState("");
 
   const fetchEstado = async () => {
