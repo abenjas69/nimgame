@@ -42,31 +42,41 @@ export default function NimGame() {
   };
 
   const fazerJogada = async () => {
-    if (lastPlayer === "user") {
-      setError("You can't play twice in a row");
-      return;
-    }
+  if (lastPlayer === "user") {
+    setError("You can't play twice in a row");
+    return;
+  }
 
-    if (linhaSelecionada === null || pausSelecionados.length === 0) return;
-    const inicio = Math.min(...pausSelecionados);
-    const quantidade = pausSelecionados.length;
+  if (linhaSelecionada === null || pausSelecionados.length === 0) return;
 
-    try {
-      const res = await axiosInstance.post("/jogada", {
-        linha: linhaSelecionada,
-        inicio,
-        quantidade,
-      });
-      setLastPlayer("user");
-      setError("");
-      setLinhaSelecionada(null);
-      setPausSelecionados([]);
-      fetchEstado();
-    } catch (err) {
-      setError(err?.response?.data?.erro || "Unknown error");
-      console.error(err);
-    }
-  };
+  const inicio = Math.min(...pausSelecionados);
+  const quantidade = pausSelecionados.length;
+
+  // Verificar se todos os paus estão realmente disponíveis no backend
+  const pausDisponiveis = estado.available_paus[linhaSelecionada];
+  const todosDisponiveis = pausSelecionados.every((idx) => pausDisponiveis[idx]);
+
+  if (!todosDisponiveis) {
+    setError("Some selected sticks are no longer available.");
+    return;
+  }
+
+  try {
+    const res = await axiosInstance.post("/jogada", {
+      linha: linhaSelecionada,
+      inicio,
+      quantidade,
+    });
+    setLastPlayer("user");
+    setError("");
+    setLinhaSelecionada(null);
+    setPausSelecionados([]);
+    fetchEstado();
+  } catch (err) {
+    setError(err?.response?.data?.erro || "Unknown error");
+    console.error(err);
+  }
+};
 
   const jogadaComputador = async () => {
     if (lastPlayer === "computer") {
