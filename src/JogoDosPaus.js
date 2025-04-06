@@ -52,7 +52,7 @@ export default function NimGame() {
     const quantidade = pausSelecionados.length;
 
     try {
-      await axiosInstance.post("/jogada", {
+      const res = await axiosInstance.post("/jogada", {
         linha: linhaSelecionada,
         inicio,
         quantidade,
@@ -75,7 +75,7 @@ export default function NimGame() {
     }
 
     try {
-      await axiosInstance.post("/jogada-computador");
+      const res = await axiosInstance.post("/jogada-computador");
       setLastPlayer("computer");
       setError("");
       fetchEstado();
@@ -86,55 +86,54 @@ export default function NimGame() {
   };
 
   const selecionarPau = (linhaIdx, pauIdx) => {
-  if (!estado || estado.jogo_terminado) return;
+    if (!estado || estado.jogo_terminado) return;
 
-  const key = pauIdx;
-  const selecionado = pausSelecionados.includes(key);
+    const key = pauIdx;
+    const selecionado = pausSelecionados.includes(key);
 
-  if (!selecionado) {
-    // Verificar se é da mesma linha que a seleção inicial
-    if (pausSelecionados.length > 0 && linhaSelecionada !== linhaIdx) {
-      setError("You can only select sticks from one row");
-      return;
+    if (!selecionado) {
+      if (pausSelecionados.length > 0 && linhaSelecionada !== linhaIdx) {
+        setError("You can only select sticks from one row");
+        return;
+      }
+
+      const novaSelecao = [...pausSelecionados, key].sort((a, b) => a - b);
+
+      const saoConsecutivos = novaSelecao.every((val, idx, arr) => {
+        if (idx === 0) return true;
+        return val === arr[idx - 1] + 1;
+      });
+
+      if (!saoConsecutivos) {
+        setError("You can only select adjacent sticks");
+        return;
+      }
+
+      if (pausSelecionados.length === 0) {
+        setLinhaSelecionada(linhaIdx);
+      }
+
+      setPausSelecionados(novaSelecao);
+      setError("");
+    } else {
+      const novaSelecao = pausSelecionados.filter((idx) => idx !== key);
+      setPausSelecionados(novaSelecao);
+      if (novaSelecao.length === 0) {
+        setLinhaSelecionada(null);
+      }
+      setError("");
     }
-
-    const novaSelecao = [...pausSelecionados, key].sort((a, b) => a - b);
-
-    // Verificar se são adjacentes
-    const saoConsecutivos = novaSelecao.every((val, idx, arr) => {
-      if (idx === 0) return true;
-      return val === arr[idx - 1] + 1;
-    });
-
-    if (!saoConsecutivos) {
-      setError("You can only select adjacent sticks");
-      return;
-    }
-
-    // Se for o primeiro pau, define a linha selecionada
-    if (pausSelecionados.length === 0) {
-      setLinhaSelecionada(linhaIdx);
-    }
-
-    setPausSelecionados(novaSelecao);
-    setError(""); // limpar erro
-  } else {
-    // Deselecionar o pau
-    const novaSelecao = pausSelecionados.filter((idx) => idx !== key);
-    setPausSelecionados(novaSelecao);
-
-    // Se não sobrar nenhum, limpar a linha selecionada
-    if (novaSelecao.length === 0) {
-      setLinhaSelecionada(null);
-    }
-
-    setError(""); // limpar erro
-  }
-};
+  };
 
   useEffect(() => {
     fetchEstado();
   }, []);
+
+  const vencedor = estado?.jogo_terminado
+    ? lastPlayer === "user"
+      ? "Computer wins!"
+      : "You win!"
+    : null;
 
   return (
     <div className="p-8 space-y-6 max-w-5xl mx-auto font-sans">
@@ -158,7 +157,10 @@ export default function NimGame() {
         <div className="space-y-4">
           <p className="text-center text-xl">Total XOR: {estado.xor_total}</p>
           {estado.jogo_terminado && (
-            <p className="text-red-600 text-center font-semibold text-lg">Game Over!</p>
+            <>
+              <p className="text-center text-2xl font-bold text-green-700">{vencedor}</p>
+              <p className="text-red-600 text-center font-semibold text-lg">Game Over!</p>
+            </>
           )}
 
           <div className="space-y-3 flex flex-col items-center">
